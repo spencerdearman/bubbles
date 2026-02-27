@@ -18,4 +18,15 @@ class AppModel {
         case open
     }
     var immersiveSpaceState = ImmersiveSpaceState.closed
+    
+    // Immersion options
+    // 0: mixed, 1: progressive, 2: full
+    var currentImmersionStyleInt: Int = 0
+    
+    // Event trigger for spawning bubbles
+    let spawnBubbleEvent = NotificationCenter.default.publisher(for: Notification.Name("SpawnBubble"))
+    
+    func spawnBubble() {
+        NotificationCenter.default.post(name: Notification.Name("SpawnBubble"), object: nil)
+    }
 }

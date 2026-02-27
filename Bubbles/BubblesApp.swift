@@ -28,17 +28,22 @@ class BubblePhysicsSystem: System {
                     Float.random(in: -0.1...0.1)
                 )
                 
-                // Nudge bubbles away from walls if they get too close (assuming box is center at [0,1,-0.5] with size 2x2x2)
+                // Nudge bubbles away from walls if they get too close (assuming box is center at [0,1,-0.5] with size 5x2x5)
                 let pos = entity.position(relativeTo: nil)
                 var antiStickForce = SIMD3<Float>(0, 0, 0)
-                let wallPadding: Float = 0.8 // Starts pushing away when within 0.2m of the 1.0m half-width
+                let wallPadding: Float = 0.8
                 
-                if pos.x < -wallPadding { antiStickForce.x += 0.2 }
-                if pos.x > wallPadding { antiStickForce.x -= 0.2 }
-                if pos.y < (1.0 - wallPadding) { antiStickForce.y += 0.2 } // Floor is 0
-                if pos.y > (1.0 + wallPadding) { antiStickForce.y -= 0.2 } // Ceiling is 2
-                if pos.z < (-0.5 - wallPadding) { antiStickForce.z += 0.2 }
-                if pos.z > (-0.5 + wallPadding) { antiStickForce.z -= 0.2 }
+                // X walls are at -2.5 and +2.5
+                if pos.x < (-2.5 + wallPadding) { antiStickForce.x += 0.2 }
+                if pos.x > (2.5 - wallPadding) { antiStickForce.x -= 0.2 }
+                
+                // Y walls are at 0 and 2.0
+                if pos.y < (0.0 + wallPadding) { antiStickForce.y += 0.2 } // Floor is 0
+                if pos.y > (2.0 - wallPadding) { antiStickForce.y -= 0.2 } // Ceiling is 2
+                
+                // Z walls are at -3.0 and +2.0 (since center is -0.5 and half-depth is 2.5)
+                if pos.z < (-3.0 + wallPadding) { antiStickForce.z += 0.2 }
+                if pos.z > (2.0 - wallPadding) { antiStickForce.z -= 0.2 }
                 
                 motion.linearVelocity += (driftForce + antiStickForce) * dt
                 
@@ -70,6 +75,7 @@ struct BubblesApp: App {
             ContentView()
                 .environment(appModel)
         }
+        .defaultSize(width: 500, height: 350)
         
         ImmersiveSpace(id: appModel.immersiveSpaceID) {
             ImmersiveView()
@@ -81,5 +87,15 @@ struct BubblesApp: App {
                     appModel.immersiveSpaceState = .closed
                 }
         }
+        .immersionStyle(selection: Binding(
+            get: {
+                switch appModel.currentImmersionStyleInt {
+                case 1: return .progressive
+                case 2: return .full
+                default: return .mixed
+                }
+            },
+            set: { _ in }
+        ), in: .mixed, .progressive, .full)
     }
 }

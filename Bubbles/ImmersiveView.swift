@@ -11,6 +11,8 @@ import RealityKitContent
 import ARKit
 
 struct ImmersiveView: View {
+    @Environment(AppModel.self) var appModel
+    
     @State var predicate: QueryPredicate<Entity> = QueryPredicate<Entity>.has(ModelComponent.self)
     @State private var timer: Timer?
     
@@ -64,7 +66,7 @@ struct ImmersiveView: View {
                 rootEntity.addChild(immersiveContentEntity)
                 
                 // Add bounding box
-                let boundingBox = createInvisibleBoundingBox(width: 2.0, height: 2.0, depth: 2.0)
+                let boundingBox = createInvisibleBoundingBox(width: 5.0, height: 2.0, depth: 5.0)
                 boundingBox.position = [0, 1.0, -0.5] // Rest on floor (y=0) up to y=2.0
                 rootEntity.addChild(boundingBox)
                 
@@ -197,7 +199,52 @@ struct ImmersiveView: View {
                     })
                 }
         )
+        .preferredSurroundingsEffect(.systemDark)
+        .onReceive(appModel.spawnBubbleEvent) { _ in
+            spawnNewBubble()
+        }
         
+    }
+    
+    // Helper to spawn a new bubble by duplicating an existing one
+    func spawnNewBubble() {
+        func findBubble(in entity: Entity) -> Entity? {
+            if entity.name.contains("Bubble") && entity.components.has(CollisionComponent.self) {
+                return entity
+            }
+            for child in entity.children {
+                if let found = findBubble(in: child) {
+                    return found
+                }
+            }
+            return nil
+        }
+
+        if let bubbleToClone = findBubble(in: rootEntity) {
+            let newBubble = bubbleToClone.clone(recursive: true)
+            
+            // Randomize position within the box
+            newBubble.position = SIMD3<Float>(
+                Float.random(in: -0.5...0.5),
+                Float.random(in: 0.5...1.5), // spawn in air
+                Float.random(in: -0.8...(-0.2)) // slightly in front
+            )
+            
+            // Give it some initial random velocity
+            if var motion = newBubble.components[PhysicsMotionComponent.self] {
+                motion.linearVelocity = [
+                    Float.random(in: -0.5...0.5),
+                    Float.random(in: -0.5...0.5),
+                    Float.random(in: -0.5...0.5)
+                ]
+                newBubble.components.set(motion)
+            }
+            
+            // Add back to the scene
+            rootEntity.addChild(newBubble)
+        } else {
+            print("Could not find a bubble to clone.")
+        }
     }
 }
 

@@ -10,16 +10,32 @@ import RealityKit
 import RealityKitContent
 
 struct ContentView: View {
-
+    @Environment(AppModel.self) private var appModel
+    
     var body: some View {
-        VStack {
-            Model3D(named: "Scene", bundle: realityKitContentBundle)
-                .padding(.bottom, 50)
-
-            Text("Hello, world!")
+        VStack(spacing: 20) {
+            Text("Bubbles")
+                .font(.extraLargeTitle)
 
             ToggleImmersiveSpaceButton()
+            
+            if appModel.immersiveSpaceState == .open {
+                @Bindable var bindableAppModel = appModel
+                Picker("Immersion Style", selection: $bindableAppModel.currentImmersionStyleInt) {
+                    Text("Mixed").tag(0)
+                    Text("Progressive").tag(1)
+                    Text("Full").tag(2)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 40)
+                
+                Button("Spawn Bubble") {
+                    appModel.spawnBubble()
+                }
+                .buttonStyle(.borderedProminent)
+            }
         }
+        .frame(width: 500, height: 350)
         .padding()
     }
 }
