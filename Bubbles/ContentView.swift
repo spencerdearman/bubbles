@@ -28,11 +28,6 @@ struct ContentView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal, 40)
-                
-                Button("Spawn Bubble") {
-                    appModel.spawnBubble()
-                }
-                .buttonStyle(.borderedProminent)
             }
         }
         .frame(width: 500, height: 350)

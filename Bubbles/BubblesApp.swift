@@ -8,51 +8,115 @@
 import SwiftUI
 import RealityKit // Required for component/system registration
 
-// MARK: - Anti-Gravity System
-struct BubbleComponent: Component { }
+struct BubbleComponent: Component {
+    var spawnTime: Date = Date()
+}
+
+// Collision Groups
+enum BubbleCollisionGroup {
+    static let bubble = CollisionGroup(rawValue: 1 << 0)
+    static let hand = CollisionGroup(rawValue: 1 << 1)
+    static let scene = CollisionGroup(rawValue: 1 << 2)
+}
+struct PopComponent: Component {
+    var progress: Float = 0
+    var isPopping: Bool = false
+}
+// No magnetic or sword components needed
 
 class BubblePhysicsSystem: System {
     private static let query = EntityQuery(where: .has(BubbleComponent.self) && .has(PhysicsMotionComponent.self))
+    
+    private var totalTime: Float = 0
     
     required init(scene: RealityKit.Scene) { }
     
     func update(context: SceneUpdateContext) {
         let dt = Float(context.deltaTime)
+        totalTime += dt
         
+        // --- 2. Update Bubbles ---
         for entity in context.scene.performQuery(Self.query) {
-            if var motion = entity.components[PhysicsMotionComponent.self] {
-                // Apply a continuous random drift force so they don't get stuck and stay in motion
-                let driftForce = SIMD3<Float>(
-                    Float.random(in: -0.1...0.1),
-                    Float.random(in: -0.1...0.1),
-                    Float.random(in: -0.1...0.1)
-                )
-                
-                // Nudge bubbles away from walls if they get too close (assuming box is center at [0,1,-0.5] with size 5x2x5)
-                let pos = entity.position(relativeTo: nil)
-                var antiStickForce = SIMD3<Float>(0, 0, 0)
-                let wallPadding: Float = 0.8
-                
-                // X walls are at -2.5 and +2.5
-                if pos.x < (-2.5 + wallPadding) { antiStickForce.x += 0.2 }
-                if pos.x > (2.5 - wallPadding) { antiStickForce.x -= 0.2 }
-                
-                // Y walls are at 0 and 2.0
-                if pos.y < (0.0 + wallPadding) { antiStickForce.y += 0.2 } // Floor is 0
-                if pos.y > (2.0 - wallPadding) { antiStickForce.y -= 0.2 } // Ceiling is 2
-                
-                // Z walls are at -3.0 and +2.0 (since center is -0.5 and half-depth is 2.5)
-                if pos.z < (-3.0 + wallPadding) { antiStickForce.z += 0.2 }
-                if pos.z > (2.0 - wallPadding) { antiStickForce.z -= 0.2 }
-                
-                motion.linearVelocity += (driftForce + antiStickForce) * dt
-                
-                // Cap maximum velocity so they don't go crazy
-                let maxSpeed: Float = 0.5
-                let currentSpeed = length(motion.linearVelocity)
-                if currentSpeed > maxSpeed {
-                    motion.linearVelocity = normalize(motion.linearVelocity) * maxSpeed
+            // 1. Handle Popping Logic
+            if var pop = entity.components[PopComponent.self] {
+                if pop.isPopping {
+                    pop.progress += dt * 4.0 // Pop in 0.25s
+                    
+                    if var material = entity.components[ModelComponent.self]?.materials.first as? ShaderGraphMaterial {
+                        do {
+                            try material.setParameter(name: "Pop", value: .float(pop.progress))
+                            entity.components[ModelComponent.self]?.materials = [material]
+                        } catch {
+                            print("Error setting shader parameter: \(error)")
+                        }
+                    }
+                    
+                    if pop.progress >= 1.0 {
+                        entity.removeFromParent()
+                        continue
+                    }
+                    entity.components.set(pop)
+                    
+                    // IF POPPING, DO NOT APPLY PHYSICS
+                    if var motion = entity.components[PhysicsMotionComponent.self] {
+                        motion.linearVelocity = .zero
+                        entity.components.set(motion)
+                    }
+                    continue // Skip physics if popping
                 }
+            } else {
+                entity.components.set(PopComponent())
+            }
+
+            // Standard drift logic (batting is handled by kinematic hand joints automatically)
+
+            // 3. Physics & Drift
+            if var motion = entity.components[PhysicsMotionComponent.self] {
+                let pos = entity.position(relativeTo: nil)
+                
+                // Pop if hits the floor (y < 0.05)
+                if pos.y < 0.05 {
+                    var pop = entity.components[PopComponent.self] ?? PopComponent()
+                    pop.isPopping = true
+                    entity.components.set(pop)
+                    motion.linearVelocity = .zero
+                    entity.components.set(motion)
+                    continue
+                }
+
+                // Organic, smooth independent paths. NO GLOBAL WIND/CLUMPING.
+                // 0. LIFESPAN: Pop after ~30 seconds to prevent clutter.
+                let age = Float(Date().timeIntervalSince(entity.components[BubbleComponent.self]?.spawnTime ?? Date()))
+                if age > 30.0 {
+                    var pop = entity.components[PopComponent.self] ?? PopComponent()
+                    pop.isPopping = true
+                    entity.components.set(pop)
+                    continue
+                }
+
+                // 1. NEUTRAL BUOYANCY: Slight oscillation (~weightless) instead of constant lift. 
+                // This prevents them from all ending up on the ceiling.
+                let buoyancyY = sin(totalTime * 0.5 + Float(entity.id.hashValue % 100)) * 0.005
+                let buoyancy = SIMD3<Float>(0, buoyancyY, 0)
+                
+                // 2. LOCAL TURBULENCE: Unique, position-independent flutter for each bubble.
+                let id = Float(entity.id.hashValue % 1000)
+                let noiseX = sin(totalTime * 1.5 + id) * 0.06
+                let noiseY = cos(totalTime * 1.2 + id * 0.7) * 0.05
+                let noiseZ = sin(totalTime * 1.8 + id * 0.3) * 0.06
+                let turbulence = SIMD3<Float>(noiseX, noiseY, noiseZ)
+                
+                // 3. QUADRATIC DRAG: naturally smoothens movement and caps speed.
+                let velocity = motion.linearVelocity
+                let speed = length(velocity)
+                let dragCoefficient: Float = 0.95 // Higher drag for more control
+                let dragForce = speed > 0.001 ? -dragCoefficient * speed * velocity : .zero
+                
+                // 4. SUM FORCES
+                let totalForce = buoyancy + turbulence + dragForce
+                
+                // Apply force to velocity
+                motion.linearVelocity += totalForce * dt
                 
                 entity.components.set(motion)
             }
@@ -66,6 +130,7 @@ struct BubblesApp: App {
     
     init() {
         BubbleComponent.registerComponent()
+        PopComponent.registerComponent()
         BubblePhysicsSystem.registerSystem()
     }
     
