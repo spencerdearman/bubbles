@@ -12,6 +12,8 @@ An immersive, physics-driven bubble simulation designed for Apple Vision Pro. In
 - **Blowing Gesture**: Form an "O" shape with your hand near your mouth to "blow" new bubbles into your space.
 - **Visual Sophistication**: High-quality shader-based popping effects and physics-driven oscillations.
 
+<video src="Bubble-Demo.mp4" width="100%" controls autoplay loop muted></video>
+
 ## Frameworks
 
 - **RealityKit**: Core rendering and Entity-Component-System (ECS) architecture.
