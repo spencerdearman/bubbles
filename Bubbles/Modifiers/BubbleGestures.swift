@@ -46,7 +46,7 @@ public struct BubbleGestures {
             as? ShaderGraphMaterial
         else { return }
 
-        // Animate the pop property to go from 0 --> 1
+        // Animate the pop property to go from 0 -> 1
         let frameRate: TimeInterval = 1.0 / 60.0  // 60 fps
         let duration: TimeInterval = 0.25  // bubble pops in 0.25 seconds
         let targetValue: Float = 1

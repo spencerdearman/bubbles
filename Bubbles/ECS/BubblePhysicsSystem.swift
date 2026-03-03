@@ -21,7 +21,7 @@ public class BubblePhysicsSystem: System {
     let dt = Float(context.deltaTime)
     totalTime += dt
 
-    // --- Update Bubbles ---
+    // Update bubbles
     for entity in context.scene.performQuery(Self.query) {
       // Handle Popping Logic
       if var pop = entity.components[PopComponent.self] {
