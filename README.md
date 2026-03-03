@@ -2,7 +2,7 @@
 
 An immersive, physics-driven bubble simulation designed for Apple Vision Pro. Interact with bubbles that respond to your hands and your physical environment.
 
-<video src="Bubble-Demo.mp4" width="100%" controls></video>
+<video src="Short-Demo.mp4" width="100%" controls autoplay loop muted></video>
 
 ## Features
 
@@ -13,8 +13,6 @@ An immersive, physics-driven bubble simulation designed for Apple Vision Pro. In
   - **Direct Gestures**: Tap to push, long-press to pop.
 - **Blowing Gesture**: Form an "O" shape with your hand near your mouth to "blow" new bubbles into your space.
 - **Visual Sophistication**: High-quality shader-based popping effects and physics-driven oscillations.
-
-<video src="Bubble-Demo.mp4" width="100%" controls autoplay loop muted></video>
 
 ## Frameworks
 
