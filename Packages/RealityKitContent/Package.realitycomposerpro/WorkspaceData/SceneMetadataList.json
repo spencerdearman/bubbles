@@ -15,7 +15,8 @@
     "objectMetadataList" : [
       [
         "4615783C-8607-450B-86AC-3214F9DF80B2",
-        "Root"
+        "Root",
+        "BubbleMaterial"
       ],
       {
         "isExpanded" : true,
@@ -23,8 +24,7 @@
       },
       [
         "4615783C-8607-450B-86AC-3214F9DF80B2",
-        "Root",
-        "BubbleMaterial"
+        "Root"
       ],
       {
         "isExpanded" : true,
@@ -121,8 +121,7 @@
     "objectMetadataList" : [
       [
         "CB766F92-EE55-4A63-9401-E7B8C009764D",
-        "Root",
-        "GridMaterial"
+        "Root"
       ],
       {
         "isExpanded" : true,
@@ -130,7 +129,8 @@
       },
       [
         "CB766F92-EE55-4A63-9401-E7B8C009764D",
-        "Root"
+        "Root",
+        "GridMaterial"
       ],
       {
         "isExpanded" : true,

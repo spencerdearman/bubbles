@@ -23,7 +23,7 @@ public class BubblePhysicsSystem: System {
 
     // --- Update Bubbles ---
     for entity in context.scene.performQuery(Self.query) {
-      // 1. Handle Popping Logic
+      // Handle Popping Logic
       if var pop = entity.components[PopComponent.self] {
         if pop.isPopping {
           pop.progress += dt * 4.0  // Pop in 0.25s
@@ -45,18 +45,18 @@ public class BubblePhysicsSystem: System {
           }
           entity.components.set(pop)
 
-          // IF POPPING, DO NOT APPLY PHYSICS
+          // If the bubbles are popping, don't apply any physics
           if var motion = entity.components[PhysicsMotionComponent.self] {
             motion.linearVelocity = .zero
             entity.components.set(motion)
           }
-          continue  // Skip physics if popping
+          continue
         }
       } else {
         entity.components.set(PopComponent())
       }
 
-      // 2. Physics & Drift
+      // Physics & Drift
       if var motion = entity.components[PhysicsMotionComponent.self] {
         let pos = entity.position(relativeTo: nil)
 
@@ -70,7 +70,7 @@ public class BubblePhysicsSystem: System {
           continue
         }
 
-        // 0. LIFESPAN: Pop after ~30 seconds to prevent clutter.
+        // Lifespan: Pop after ~30 seconds to prevent clutter.
         let age = Float(
           Date().timeIntervalSince(entity.components[BubbleComponent.self]?.spawnTime ?? Date()))
         if age > 30.0 {
@@ -80,24 +80,24 @@ public class BubblePhysicsSystem: System {
           continue
         }
 
-        // 1. NEUTRAL BUOYANCY: Slight oscillation (~weightless) instead of constant lift.
+        // Neutral buoyancy: Slight oscillation (~weightless) instead of constant lift.
         let buoyancyY = sin(totalTime * 0.5 + Float(entity.id.hashValue % 100)) * 0.005
         let buoyancy = SIMD3<Float>(0, buoyancyY, 0)
 
-        // 2. LOCAL TURBULENCE: Unique, position-independent flutter for each bubble.
+        // Local turbulence: Unique, position-independent flutter for each bubble.
         let id = Float(entity.id.hashValue % 1000)
         let noiseX = sin(totalTime * 1.5 + id) * 0.06
         let noiseY = cos(totalTime * 1.2 + id * 0.7) * 0.05
         let noiseZ = sin(totalTime * 1.8 + id * 0.3) * 0.06
         let turbulence = SIMD3<Float>(noiseX, noiseY, noiseZ)
 
-        // 3. QUADRATIC DRAG: naturally smoothens movement and caps speed.
+        // Quadratic drag: naturally smoothens movement and caps speed.
         let velocity = motion.linearVelocity
         let speed = length(velocity)
         let dragCoefficient: Float = 0.95  // Higher drag for more control
         let dragForce = speed > 0.001 ? -dragCoefficient * speed * velocity : .zero
 
-        // 4. SUM FORCES
+        // Sum forces
         let totalForce = buoyancy + turbulence + dragForce
 
         // Apply force to velocity
