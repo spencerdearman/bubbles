@@ -1,6 +1,7 @@
 {
   "images" : [
     {
+      "filename" : "light.png",
       "idiom" : "vision",
       "scale" : "2x"
     }
