@@ -1,4 +1,4 @@
-# 🫧 Bubbles - visionOS 
+# Bubbles - visionOS 
 
 An immersive, physics-driven bubble simulation designed for Apple Vision Pro. Interact with bubbles that respond to your hands and your physical environment.
 
