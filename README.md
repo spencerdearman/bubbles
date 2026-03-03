@@ -4,6 +4,12 @@ An immersive, physics-driven bubble simulation designed for Apple Vision Pro. In
 
 <video src="Short-Demo.mp4" width="100%" controls autoplay loop muted></video>
 
+
+
+https://github.com/user-attachments/assets/cba5096e-b279-4e46-9003-62fe626a630d
+
+
+
 ## Features
 
 - **Organic Physics Engine**: Custom buoyancy and turbulence systems create light, fluttering movement that feels like real soap bubbles.
